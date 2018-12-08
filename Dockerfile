@@ -54,6 +54,7 @@ RUN "$GLIBC_SRC_DIR/configure" \
 			--enable-stack-protector=strong
 RUN make -j$(grep -c '^processor' /proc/cpuinfo)  all
 RUN make -j$(grep -c '^processor' /proc/cpuinfo)  install
+RUN cd $GLIBC_SRC_DIR && cp COPYING.LIB LICENSES $GLIBC_PREFIX_DIR
 
 ARG TARGET_TARBALL=/openjdk-glibc-$GLIBC_VERSION.tar.gz
-RUN cd $GLIBC_PREFIX_DIR && tar --hard-dereference -zcf "$TARGET_TARBALL" .
+RUN cd $GLIBC_PREFIX_DIR && tar --hard-dereference -zcf "$TARGET_TARBALL" ./COPYING* ./lib
