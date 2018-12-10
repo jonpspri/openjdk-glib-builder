@@ -9,9 +9,9 @@ MAINTAINER Jonathan Springer <jonpspri@gmail.com>
 #
 ARG TARBALL_DIR=/tarballs
 
-ARG GLIBC_PREFIX_DIR=/usr/glibc
-ARG GLIBC_SRC_DIR=/glibc/src
-ARG GLIBC_BUILD_DIR=/glibc/build
+ARG GLIBC_PREFIX_DIR=/usr/glibc-compat
+ARG GLIBC_SRC_DIR=/builder/src
+ARG GLIBC_BUILD_DIR=/builder/build
 
 SHELL [ "bash", "-o", "pipefail", "-c" ]
 
@@ -40,10 +40,10 @@ ARG GLIBC_VERSION=2.28
 #  I don't declare one for the build, so I am going to pass on that for now.
 #
 RUN test -f glibc-$GLIBC_VERSION.tar.gz || \
-			wget -nv "https://ftpmirror.gnu.org/gnu/glibc/glibc-$GLIBC_VERSION.tar.gz"
-
-RUN fgrep "$GLIBC_VERSION" shasums.txt | sha256sum -c \
-	&& tar zfx glibc-$GLIBC_VERSION.tar.gz -C "$GLIBC_SRC_DIR" --strip 1
+			wget -nv "https://ftpmirror.gnu.org/gnu/glibc/glibc-$GLIBC_VERSION.tar.gz" \
+  && fgrep "$GLIBC_VERSION" shasums.txt | sha256sum -c \
+	&& tar zfx glibc-$GLIBC_VERSION.tar.gz -C "$GLIBC_SRC_DIR" --strip 1 \
+	&& rm glibc-$GLIBC_VERSION.tar.gz
 
 WORKDIR $GLIBC_BUILD_DIR
 RUN "$GLIBC_SRC_DIR/configure" \
@@ -52,9 +52,8 @@ RUN "$GLIBC_SRC_DIR/configure" \
 			--libexecdir="$GLIBC_PREFIX_DIR/lib" \
 			--enable-multi-arch \
 			--enable-stack-protector=strong
-RUN make -j$(grep -c '^processor' /proc/cpuinfo)  all
-RUN make -j$(grep -c '^processor' /proc/cpuinfo)  install
-RUN cd $GLIBC_SRC_DIR && cp COPYING.LIB LICENSES $GLIBC_PREFIX_DIR
 
-ARG TARGET_TARBALL=/openjdk-glibc-$GLIBC_VERSION.tar.gz
-RUN cd $GLIBC_PREFIX_DIR && tar --hard-dereference -zcf "$TARGET_TARBALL" ./COPYING* ./lib
+RUN make -j$(grep -c '^processor' /proc/cpuinfo)  all \
+	&& make -j$(grep -c '^processor' /proc/cpuinfo)  install \
+	&& rm -rf ./* \
+  && cd $GLIBC_SRC_DIR && cp COPYING.LIB LICENSES $GLIBC_PREFIX_DIR
