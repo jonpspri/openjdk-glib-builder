@@ -1,5 +1,4 @@
 FROM ubuntu:18.04
-MAINTAINER Jonathan Springer <jonpspri@gmail.com>
 
 #
 #  Maybe these shouldn't be arguments, but I'm leaving them here
@@ -7,43 +6,30 @@ MAINTAINER Jonathan Springer <jonpspri@gmail.com>
 #  at some point I may want to provide the Tarballs via a volume
 #  mount rather than a download.
 #
-ARG TARBALL_DIR=/tarballs
-
 ARG GLIBC_PREFIX_DIR=/usr/glibc-compat
 ARG GLIBC_SRC_DIR=/builder/src
 ARG GLIBC_BUILD_DIR=/builder/build
+ARG GLIBC_VERSION=2.28
 
 SHELL [ "bash", "-o", "pipefail", "-c" ]
 
 RUN apt-get -q update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get -qy install \
+	&& DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends -qy install \
 		bison \
 		build-essential \
+		ca-certificates \
 		gawk \
-		wget
+		wget \
+	&& rm -rf /var/apt/lists/*
 
-RUN mkdir -p $TARBALL_DIR $GLIBC_SRC_DIR
-WORKDIR $TARBALL_DIR
+WORKDIR /tmp
 COPY shasums.txt .
-
-#
-#  These args are down here so Docker doesn't have to redo the Ubuntu apt
-#  gets whenever it's compiling a different version combination
-#
-ARG GLIBC_VERSION=2.28
-
-#
-#  If the files exist, don't download them again (volume mount), otherwise
-#  check them against the SHA sums that are expected.
-#
-#  I don't know how to get docker to persist things on an internal volume if
-#  I don't declare one for the build, so I am going to pass on that for now.
-#
 RUN test -f glibc-$GLIBC_VERSION.tar.gz || \
 			wget -nv "https://ftpmirror.gnu.org/gnu/glibc/glibc-$GLIBC_VERSION.tar.gz" \
-  && fgrep "$GLIBC_VERSION" shasums.txt | sha256sum -c \
-	&& tar zfx glibc-$GLIBC_VERSION.tar.gz -C "$GLIBC_SRC_DIR" --strip 1 \
-	&& rm glibc-$GLIBC_VERSION.tar.gz
+  && grep -F "$GLIBC_VERSION" shasums.txt | sha256sum -c \
+	&& mkdir -p "$GLIBC_SRC_DIR" "$GLIBC_BUILD_DIR" \
+	&& tar zfx "glibc-$GLIBC_VERSION.tar.gz" -C "$GLIBC_SRC_DIR" --strip 1 \
+	&& rm "glibc-$GLIBC_VERSION.tar.gz"
 
 WORKDIR $GLIBC_BUILD_DIR
 RUN "$GLIBC_SRC_DIR/configure" \
@@ -53,7 +39,7 @@ RUN "$GLIBC_SRC_DIR/configure" \
 			--enable-multi-arch \
 			--enable-stack-protector=strong
 
-RUN make -j$(grep -c '^processor' /proc/cpuinfo)  all \
-	&& make -j$(grep -c '^processor' /proc/cpuinfo)  install \
+RUN make -j"$(grep -c '^processor' /proc/cpuinfo)"  all \
+	&& make -j"$(grep -c '^processor' /proc/cpuinfo)"  install \
 	&& rm -rf ./* \
-  && cd $GLIBC_SRC_DIR && cp COPYING.LIB LICENSES $GLIBC_PREFIX_DIR
+  && cp "$GLIBC_SRC_DIR/COPYING.LIB" "$GLIBC_SRC_DIR/LICENSES" "$GLIBC_PREFIX_DIR"
