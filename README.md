@@ -2,9 +2,13 @@
 
 This Dockerfile builds an installation of the
 [GNU C Library](https://www.gnu.org/software/libc/) suitable for extraction
-into an Alpine container.  The build is deliberately written to compile on
+into an [Alpine Linux](https://alpinelinux.org/) container.  The build is
+deliberately written to compile on
 multiple architectures and is regularly tested on x86_64, ppc64le, aarch64 and
 s390x machines.
+
+This build was created in support of the
+[AdoptOpenJDK](https://adoptopenjdk.net/) project.
 
 ## Basic usage
 
