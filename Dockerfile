@@ -37,6 +37,15 @@ RUN apt-get -q update \
 	&& rm -rf /var/apt/lists/*
 
 #
+#  This is likely to be changed, though one should try to match the tag
+#  to the argument.  To wit:
+#
+#    GLIBC_VERSION=2.28 docker build --build-arg GLIBC_VERSION=$GLIBC_VERSION \
+#        --tag openjdk-glibc-build:$GLIBC_VERSION
+#
+ARG GLIBC_VERSION=2.28
+
+#
 #  Download GLibC, check to make sure the server wasn't hacked, and unpack
 #  it into the source directory.
 #
