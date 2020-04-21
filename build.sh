@@ -2,7 +2,7 @@
 
 set -eu
 
-glibc_version=${ADOPTOPENJDK_GLIBC_VERSION:-2.28}
+glibc_version=${ADOPTOPENJDK_GLIBC_VERSION:-2.31}
 target_registry=${ADOPTOPENJDK_TARGET_REGISTRY:-adoptopenjdk}
 
 docker build --build-arg GLIBC_VERSION="$glibc_version" \

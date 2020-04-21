@@ -15,18 +15,19 @@ ARG GLIBC_BUILD_DIR=/builder/build
 #    GLIBC_VERSION=2.28 docker build --build-arg GLIBC_VERSION=$GLIBC_VERSION \
 #        --tag openjdk-glibc-build:$GLIBC_VERSION
 #
-ARG GLIBC_VERSION=2.28
+ARG GLIBC_VERSION=2.31
 
 #
 #  Don't mess with this.  We use pipelines in the RUN steps and we want failures
 #  to propagate outward to the &&s
 #
-SHELL [ "bash", "-o", "pipefail", "-c" ]
+SHELL [ "/bin/bash", "-o", "pipefail", "-c" ]
 
 #
 #  'build-essentials' may be overkill, but not by much.  Maybe someone in a
 #  good mood will care to experiment.
 #
+#hadolint ignore=DL3008
 RUN apt-get -q update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends -qy install \
 		bison \
@@ -35,15 +36,6 @@ RUN apt-get -q update \
 		gawk \
 		wget \
 	&& rm -rf /var/apt/lists/*
-
-#
-#  This is likely to be changed, though one should try to match the tag
-#  to the argument.  To wit:
-#
-#    GLIBC_VERSION=2.28 docker build --build-arg GLIBC_VERSION=$GLIBC_VERSION \
-#        --tag openjdk-glibc-build:$GLIBC_VERSION
-#
-ARG GLIBC_VERSION=2.28
 
 #
 #  Download GLibC, check to make sure the server wasn't hacked, and unpack
